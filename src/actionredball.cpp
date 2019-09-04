@@ -29,67 +29,67 @@ public:
     bool start()
     {
         std::string dest="/demoRedBall/trackTarget:i";
-        port.open(("/xxx/redballpos:o"));
-        bool res=Network::connect(port.getName(),dest,"udp");
+        port_.open(("/xxx/redballpos:o"));
+        bool res=Network::connect(port_.getName(),dest,"udp");
         if(!res)
         {
-            TXLOG(Severity::error)<<"Port can't be opened "<<port.getName()<<std::endl;
+            TXLOG(Severity::error)<<"Port can't be opened "<<port_.getName()<<std::endl;
         }
 
-        mythread=std::make_shared<std::thread>(&DemoRedBallPosition::run,this);
+        mythread_=std::make_shared<std::thread>(&DemoRedBallPosition::run,this);
         return true;
     }
 
     DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_) :
-                        eye_(eye_), pos(4,0.0),
-                        visible(false)
+                        eye_(eye_), pos_(4,0.0),
+                        visible_(false)
     {
-        if (!driver.view(igaze))
-            igaze=NULL;
-        pos[3]=1.0;
+        if (!driver.view(igaze_))
+            igaze_=NULL;
+        pos_[3]=1.0;
     }
 
     bool setPos(const Vector &pos)
     {
         if (pos.length()>=3)
         {
-            this->pos.setSubvector(0,pos.subVector(0,2));
+            pos_.setSubvector(0,pos.subVector(0,2));
             return true;
         }
         else
             return false;
     }
 
-    void setVisible()   { visible=true;  }
-    void setInvisible() { visible=false; }
+    void setVisible()   { visible_=true;  }
+    void setInvisible() { visible_=false; }
 
 private:
     void run()
     {
         while(1)
         {
-            if (igaze!=NULL)
+            if (igaze_!=NULL)
             {
                 Vector x,o;
                 if (eye_=="left")
-                    igaze->getLeftEyePose(x,o);
+                    igaze_->getLeftEyePose(x,o);
                 else
-                    igaze->getRightEyePose(x,o);
+                    igaze_->getRightEyePose(x,o);
 
                 Matrix T=axis2dcm(o);
                 T.setSubcol(x,0,3);
-                Vector pos_=SE3inv(T)*pos;
+                Vector pos=SE3inv(T)*pos_;
 
-                Bottle &cmd=port.prepare();
+                Bottle &cmd=port_.prepare();
                 cmd.clear();
-                cmd.addDouble(pos_[0]);
-                cmd.addDouble(pos_[1]);
-                cmd.addDouble(pos_[2]);
+                cmd.addDouble(pos[0]);
+                cmd.addDouble(pos[1]);
+                cmd.addDouble(pos[2]);
                 cmd.addDouble(0.0);
                 cmd.addDouble(0.0);
                 cmd.addDouble(0.0);
-                cmd.addDouble(visible?1.0:0.0);
-                port.write();
+                cmd.addDouble(visible_?1.0:0.0);
+                port_.write();
                 
             }
             std::this_thread::sleep_for (100ms);
@@ -97,12 +97,12 @@ private:
     }
 
     std::string name;
-    IGazeControl *igaze;
+    IGazeControl *igaze_;
     std::string eye_;
-    Vector pos;
-    bool visible;
-    BufferedPort<Bottle> port;
-    std::shared_ptr<std::thread> mythread;    
+    Vector pos_;
+    bool visible_;
+    BufferedPort<Bottle> port_;
+    std::shared_ptr<std::thread> mythread_;    
 };
 
 
@@ -224,7 +224,6 @@ void ActionRedBall::beforeExecute()
 
 execution ActionRedBall::execute(const TestRepetitions&)
 {
-    TXLOG(Severity::info)<<"ActionRedBall::execute"<<std::endl;
     Vector pos(3,0.0);
     pos[0]=-0.3;
 
@@ -264,9 +263,11 @@ void ActionRedBall::testBallPosition(const Vector &pos)
             done=true;
             break;
         }
-        Time::delay(0.01);
     }
-    ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Ball gazed at with the eyes!");
+    if(!done)
+        TXLOG(Severity::error)<<"Ball gazed at with the eyes."<<std::endl;
+    done=false;  
+    //ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Ball gazed at with the eyes!");
 
     t0=Time::now();
     while (Time::now()-t0<10.0)
@@ -279,9 +280,11 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         }
         Time::delay(0.01);
     }
-    ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Ball reached with the hand!");
+    if(!done)
+        TXLOG(Severity::error)<<"Ball not reached with the hand."<<std::endl;
+    done=false;
 
-    ROBOTTESTINGFRAMEWORK_TEST_REPORT("Going home");
+    //ROBOTTESTINGFRAMEWORK_TEST_REPORT("Going home");
     redBallPos_->setInvisible();
 
     armUnderTest_.ienc_->getAxes(&nEncs);
@@ -297,7 +300,9 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         }
         Time::delay(1.0);
     }
-    ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Arm has reached home!");
+    if(!done)
+        TXLOG(Severity::error)<<"Arm has not reached home."<<std::endl;
+    done=false;
 
     drvJointHead_.view(ienc_);
     ienc_->getAxes(&nEncs);
@@ -313,7 +318,9 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         }
         Time::delay(1.0);
     }
-    ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Head has reached home!");
+    if(!done)
+        TXLOG(Severity::error)<<"Head has not reached home."<<std::endl;
+    done=false;    
 
     drvJointTorso_.view(ienc_);
     ienc_->getAxes(&nEncs);
@@ -330,7 +337,8 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         Time::delay(1.0);
     }
 
-    ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Torso has reached home!");
+    if(!done)
+        TXLOG(Severity::error)<<"Torso has not reached home."<<std::endl;
 }
 
 
