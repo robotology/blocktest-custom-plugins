@@ -85,4 +85,29 @@ private:
     ACTIONREGISTER_DEC_TYPE(ActionRedBall)        
 };
 
+
+class DemoRedBallPosition
+{
+public:
+    bool start();
+
+    DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_);
+
+    bool setPos(const Vector &pos);
+
+    void setVisible();
+    void setInvisible();
+
+private:
+    void run();
+
+    std::string name;
+    IGazeControl *igaze_;
+    std::string eye_;
+    Vector pos_;
+    bool visible_;
+    BufferedPort<Bottle> port_;
+    std::shared_ptr<std::thread> mythread_;    
+};
+
 }
