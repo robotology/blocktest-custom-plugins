@@ -27,6 +27,7 @@
 #include <yarp/math/Math.h>
 
 #include <memory>
+#include <atomic>
 
 using namespace yarp::os;
 using namespace yarp::dev;
@@ -92,6 +93,7 @@ public:
     bool start();
 
     DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_);
+    ~DemoRedBallPosition();
 
     bool setPos(const Vector &pos);
 
@@ -107,7 +109,9 @@ private:
     Vector pos_;
     bool visible_;
     BufferedPort<Bottle> port_;
-    std::shared_ptr<std::thread> mythread_;    
+    
+    std::shared_ptr<std::thread> positionThread_;   
+    std::atomic<bool> threadIsActive_{true}; 
 };
 
 }

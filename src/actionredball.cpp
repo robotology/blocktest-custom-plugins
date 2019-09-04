@@ -34,17 +34,21 @@ bool DemoRedBallPosition::start()
         TXLOG(Severity::error)<<"Port can't be opened "<<port_.getName()<<std::endl;
     }
 
-    mythread_=std::make_shared<std::thread>(&DemoRedBallPosition::run,this);
+    positionThread_=std::make_shared<std::thread>(&DemoRedBallPosition::run,this);
     return true;
 }
 
-DemoRedBallPosition::DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_) :
-                    eye_(eye_), pos_(4,0.0),
-                    visible_(false)
+DemoRedBallPosition::DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_):eye_(eye_), pos_(4,0.0),visible_(false)
 {
     if (!driver.view(igaze_))
         igaze_=NULL;
     pos_[3]=1.0;
+}
+
+DemoRedBallPosition::~DemoRedBallPosition()
+{
+    threadIsActive_=false;
+    positionThread_->join();
 }
 
 bool DemoRedBallPosition::setPos(const Vector &pos)
@@ -63,7 +67,7 @@ void DemoRedBallPosition::setInvisible() { visible_=false; }
 
 void DemoRedBallPosition::run()
 {
-    while(1)
+    while(threadIsActive_)
     {
         if (igaze_!=NULL)
         {
@@ -217,13 +221,11 @@ execution ActionRedBall::execute(const TestRepetitions&)
     pos[1]=-0.15;
     drvJointArmL_.view(armUnderTest_.ienc_);
     drvCartArmL_.view(armUnderTest_.iarm_);
-    //ROBOTTESTINGFRAMEWORK_TEST_REPORT("Reaching with the left hand");
     testBallPosition(pos);
 
     pos[1]=+0.15;
     drvJointArmR_.view(armUnderTest_.ienc_);
     drvCartArmR_.view(armUnderTest_.iarm_);
-    //ROBOTTESTINGFRAMEWORK_TEST_REPORT("Reaching with the right hand");
     testBallPosition(pos);
 
     return execution::continueexecution;
