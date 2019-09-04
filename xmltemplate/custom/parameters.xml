@@ -1,0 +1,9 @@
+<balltimeout 
+    short="ball movement timeout" 
+    full="ball movement timeout" 
+    values=""  
+    uom="msec" 
+    type="string" 
+    editable="true" 
+    emphasize="false"
+/>
