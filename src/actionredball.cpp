@@ -23,88 +23,75 @@ using namespace std::chrono_literals;
 namespace CustomActions
 {
 
-class DemoRedBallPosition
-{
-public:
-    bool start()
-    {
-        std::string dest="/demoRedBall/trackTarget:i";
-        port_.open(("/xxx/redballpos:o"));
-        bool res=Network::connect(port_.getName(),dest,"udp");
-        if(!res)
-        {
-            TXLOG(Severity::error)<<"Port can't be opened "<<port_.getName()<<std::endl;
-        }
 
-        mythread_=std::make_shared<std::thread>(&DemoRedBallPosition::run,this);
+bool DemoRedBallPosition::start()
+{
+    std::string dest="/demoRedBall/trackTarget:i";
+    port_.open(("/xxx/redballpos:o"));
+    bool res=Network::connect(port_.getName(),dest,"udp");
+    if(!res)
+    {
+        TXLOG(Severity::error)<<"Port can't be opened "<<port_.getName()<<std::endl;
+    }
+
+    mythread_=std::make_shared<std::thread>(&DemoRedBallPosition::run,this);
+    return true;
+}
+
+DemoRedBallPosition::DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_) :
+                    eye_(eye_), pos_(4,0.0),
+                    visible_(false)
+{
+    if (!driver.view(igaze_))
+        igaze_=NULL;
+    pos_[3]=1.0;
+}
+
+bool DemoRedBallPosition::setPos(const Vector &pos)
+{
+    if (pos.length()>=3)
+    {
+        pos_.setSubvector(0,pos.subVector(0,2));
         return true;
     }
+    else
+        return false;
+}
 
-    DemoRedBallPosition(const std::string &,PolyDriver &driver,const std::string &eye_) :
-                        eye_(eye_), pos_(4,0.0),
-                        visible_(false)
-    {
-        if (!driver.view(igaze_))
-            igaze_=NULL;
-        pos_[3]=1.0;
-    }
+void DemoRedBallPosition::setVisible()   { visible_=true;  }
+void DemoRedBallPosition::setInvisible() { visible_=false; }
 
-    bool setPos(const Vector &pos)
+void DemoRedBallPosition::run()
+{
+    while(1)
     {
-        if (pos.length()>=3)
+        if (igaze_!=NULL)
         {
-            pos_.setSubvector(0,pos.subVector(0,2));
-            return true;
+            Vector x,o;
+            if (eye_=="left")
+                igaze_->getLeftEyePose(x,o);
+            else
+                igaze_->getRightEyePose(x,o);
+
+            Matrix T=axis2dcm(o);
+            T.setSubcol(x,0,3);
+            Vector pos=SE3inv(T)*pos_;
+
+            Bottle &cmd=port_.prepare();
+            cmd.clear();
+            cmd.addDouble(pos[0]);
+            cmd.addDouble(pos[1]);
+            cmd.addDouble(pos[2]);
+            cmd.addDouble(0.0);
+            cmd.addDouble(0.0);
+            cmd.addDouble(0.0);
+            cmd.addDouble(visible_?1.0:0.0);
+            port_.write();
+            
         }
-        else
-            return false;
+        std::this_thread::sleep_for (100ms);
     }
-
-    void setVisible()   { visible_=true;  }
-    void setInvisible() { visible_=false; }
-
-private:
-    void run()
-    {
-        while(1)
-        {
-            if (igaze_!=NULL)
-            {
-                Vector x,o;
-                if (eye_=="left")
-                    igaze_->getLeftEyePose(x,o);
-                else
-                    igaze_->getRightEyePose(x,o);
-
-                Matrix T=axis2dcm(o);
-                T.setSubcol(x,0,3);
-                Vector pos=SE3inv(T)*pos_;
-
-                Bottle &cmd=port_.prepare();
-                cmd.clear();
-                cmd.addDouble(pos[0]);
-                cmd.addDouble(pos[1]);
-                cmd.addDouble(pos[2]);
-                cmd.addDouble(0.0);
-                cmd.addDouble(0.0);
-                cmd.addDouble(0.0);
-                cmd.addDouble(visible_?1.0:0.0);
-                port_.write();
-                
-            }
-            std::this_thread::sleep_for (100ms);
-        }
-    }
-
-    std::string name;
-    IGazeControl *igaze_;
-    std::string eye_;
-    Vector pos_;
-    bool visible_;
-    BufferedPort<Bottle> port_;
-    std::shared_ptr<std::thread> mythread_;    
-};
-
+}
 
 
 
