@@ -50,7 +50,7 @@ public:
 
 private:        
 
-    void testBallPosition(const Vector &pos);
+    void testBallPosition(const Vector &pos,const TestRepetitions& testrepetition);
     std::unique_ptr<DemoRedBallPosition> redBallPos_;
 
     class Params 
@@ -82,6 +82,11 @@ private:
     yarp::dev::PolyDriver drvCartArmR_;
     yarp::dev::PolyDriver drvGaze_;
 
+    double tollerance_{0.1};
+    std::string robotName_;
+    std::string eye_;
+    bool useleft_;
+    bool useright_;
 
     ACTIONREGISTER_DEC_TYPE(ActionRedBall)        
 };

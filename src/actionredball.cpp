@@ -93,16 +93,25 @@ void DemoRedBallPosition::run()
             port_.write();
             
         }
-        std::this_thread::sleep_for (100ms);
+        Time::delay(0.1);
     }
 }
 
-
-
 ActionRedBall::ActionRedBall(const CommandAttributes& commandAttributes,const std::string& testCode):Action(commandAttributes,testCode)
 { 
-    //std::string context=property.check("context",Value("demoRedBall")).asString();
+ 
+}     
+
+void ActionRedBall::beforeExecute()
+{
+   //std::string context=property.check("context",Value("demoRedBall")).asString();
     //std::string from=property.check("from",Value("config-test.ini")).asString();
+
+    getCommandAttribute("tollerance", tollerance_);
+    getCommandAttribute("robotname", robotName_);
+    getCommandAttribute("eye", eye_);
+    getCommandAttribute("useleft", useleft_);
+    getCommandAttribute("useright_", useright_);
 
     std::string context="demoRedBall";
     std::string from="config-test.ini";
@@ -114,11 +123,11 @@ ActionRedBall::ActionRedBall(const CommandAttributes& commandAttributes,const st
     rf.configure(0,NULL);
 
     // fallback values
-    params_.robot_="icubSim";
-    params_.eye_="left";
-    params_.reach_tol_=0.01;
-    params_.use_left_=true;
-    params_.use_right_=true;
+    params_.robot_=robotName_;
+    params_.eye_=eye_;
+    params_.reach_tol_=tollerance_;
+    params_.use_left_=useleft_;
+    params_.use_right_=useright_;
     params_.home_arm.resize(7,0.0);
 
     Bottle &general=rf.findGroup("general");
@@ -155,7 +164,7 @@ ActionRedBall::ActionRedBall(const CommandAttributes& commandAttributes,const st
         optCart.put("local",("/xxx/cartesian/left_arm"));
         bool res=drvJointArmL_.open(optJoint)&&drvCartArmL_.open(optCart);
         if(!res)
-            TXLOG(Severity::error)<<"Unable to open clients for left_arm"<<std::endl;
+            addProblem({0,0},Severity::error,"Unable to open clients for left_arm.",true);        
     }
 
     if (params_.use_right_)
@@ -172,8 +181,7 @@ ActionRedBall::ActionRedBall(const CommandAttributes& commandAttributes,const st
 
         bool res=drvJointArmR_.open(optJoint)&&drvCartArmR_.open(optCart);
         if(!res)
-            TXLOG(Severity::error)<<"Unable to open clients for right_arm"<<std::endl;
-
+            addProblem({0,0},Severity::error,"Unable to open clients for right_arm.",true);        
     }
 
     {
@@ -189,8 +197,7 @@ ActionRedBall::ActionRedBall(const CommandAttributes& commandAttributes,const st
 
         bool res=drvJointHead_.open(optJoint)&&drvGaze_.open(optGaze);
         if(!res)
-            TXLOG(Severity::error)<<"Unable to open clients for head"<<std::endl;
-
+            addProblem({0,0},Severity::error,"Unable to open clients for head.",true);       
     }
 
     {
@@ -201,19 +208,14 @@ ActionRedBall::ActionRedBall(const CommandAttributes& commandAttributes,const st
 
         bool res=drvJointTorso_.open(optJoint);
         if(!res)
-            TXLOG(Severity::error)<<"Unable to open clients for torso"<<std::endl;
+            addProblem({0,0},Severity::error,"Unable to open clients for torso.",true);
     }
 
-    TXLOG(Severity::info)<<"ActionRedBall 2"<<std::endl;
     redBallPos_=std::make_unique<DemoRedBallPosition>("xxx",drvGaze_,params_.eye_);
-    redBallPos_->start();
-}     
-
-void ActionRedBall::beforeExecute()
-{
+    redBallPos_->start();    
 }
 
-execution ActionRedBall::execute(const TestRepetitions&)
+execution ActionRedBall::execute(const TestRepetitions& testrepetition)
 {
     Vector pos(3,0.0);
     pos[0]=-0.3;
@@ -221,17 +223,17 @@ execution ActionRedBall::execute(const TestRepetitions&)
     pos[1]=-0.15;
     drvJointArmL_.view(armUnderTest_.ienc_);
     drvCartArmL_.view(armUnderTest_.iarm_);
-    testBallPosition(pos);
+    testBallPosition(pos,testrepetition);
 
     pos[1]=+0.15;
     drvJointArmR_.view(armUnderTest_.ienc_);
     drvCartArmR_.view(armUnderTest_.iarm_);
-    testBallPosition(pos);
+    testBallPosition(pos,testrepetition);
 
     return execution::continueexecution;
 }
 
-void ActionRedBall::testBallPosition(const Vector &pos)
+void ActionRedBall::testBallPosition(const Vector &pos,const TestRepetitions& testrepetition)
 {
     redBallPos_->setPos(pos);
     redBallPos_->setVisible();
@@ -254,9 +256,8 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         }
     }
     if(!done)
-        TXLOG(Severity::error)<<"Ball gazed at with the eyes."<<std::endl;
+        addProblem(testrepetition,Severity::error,"Ball gazed at with the eyes.",true);
     done=false;  
-    //ROBOTTESTINGFRAMEWORK_TEST_CHECK(done,"Ball gazed at with the eyes!");
 
     t0=Time::now();
     while (Time::now()-t0<10.0)
@@ -270,10 +271,9 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         Time::delay(0.01);
     }
     if(!done)
-        TXLOG(Severity::error)<<"Ball not reached with the hand."<<std::endl;
+        addProblem(testrepetition,Severity::error,"Ball not reached with the hand.",true);
     done=false;
 
-    //ROBOTTESTINGFRAMEWORK_TEST_REPORT("Going home");
     redBallPos_->setInvisible();
 
     armUnderTest_.ienc_->getAxes(&nEncs);
@@ -290,7 +290,7 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         Time::delay(1.0);
     }
     if(!done)
-        TXLOG(Severity::error)<<"Arm has not reached home."<<std::endl;
+        addProblem(testrepetition,Severity::error,"Arm has not reached home.",true);
     done=false;
 
     drvJointHead_.view(ienc_);
@@ -308,7 +308,7 @@ void ActionRedBall::testBallPosition(const Vector &pos)
         Time::delay(1.0);
     }
     if(!done)
-        TXLOG(Severity::error)<<"Head has not reached home."<<std::endl;
+        addProblem(testrepetition,Severity::error,"Head has not reached home.",true);
     done=false;    
 
     drvJointTorso_.view(ienc_);
@@ -327,8 +327,8 @@ void ActionRedBall::testBallPosition(const Vector &pos)
     }
 
     if(!done)
-        TXLOG(Severity::error)<<"Torso has not reached home."<<std::endl;
-}
+        addProblem(testrepetition,Severity::error,"Torso has not reached home.",true);
 
+}
 
 }
