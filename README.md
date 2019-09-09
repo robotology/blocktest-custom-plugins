@@ -6,17 +6,65 @@
 [![Build Status (Linux) (master branch)](https://img.shields.io/travis/com/robotology/blocktest/master.svg?logo=travis&label=[master]%20build%20(Linux))](https://travis-ci.com/robotology/blocktest)
 [![Build Status (Linux) (devel branch)](https://img.shields.io/travis/com/robotology/blocktest/devel.svg?logo=travis&label=[devel]%20build%20(Linux))](https://travis-ci.com/robotology/blocktest)
 
-# 3. TOC
+# 2. TOC
 
 - [1. CI Status](#1-ci-status)
-- [3. TOC](#3-toc)
-- [2. Introduction](#2-introduction)
-- [4. Redball demo](#4-redball-demo)
+- [2. TOC](#2-toc)
+- [3. Introduction](#3-introduction)
+- [4. Installation](#4-installation)
+	- [4.1. Prerequisite Linux](#41-prerequisite-linux)
+	- [4.2. Prerequisite Windows](#42-prerequisite-windows)
+	- [4.3. Installation and compilation](#43-installation-and-compilation)
+- [5. Redball demo](#5-redball-demo)
 
-# 2. Introduction
+# 3. Introduction
 This repository has been created to contain all the custom plugin created by researchers.
 
-# 4. Redball demo
+# 4. Installation
+
+Supported OS: Linux Ubuntu 18.10 and Windows 10.
+Boost library version must be >1.64.
+
+
+## 4.1. Prerequisite Linux
+
+```bash
+sudo apt-get install -y cmake libboost-all-dev
+```
+YARP see https://github.com/robotology/yarp
+
+## 4.2. Prerequisite Windows
+
+```bash
+vcpkg install boost:x86-windows
+```
+YARP see https://github.com/robotology/yarp
+
+In bash:
+```bash
+export blocktest_DIR=<path to your blocktest build dir>
+```
+
+## 4.3. Installation and compilation
+
+In order to compile just execute the following commands in a bash
+terminal.
+```bash
+git clone https://github.com/robotology/blocktest-custom-plugins     
+cd blocktest-custom-plugins
+mkdir build
+cd build
+ccmake ..
+```
+Make sure your CMAKE_INSTALL_PREFIX in ccmake is \<path to your blocktest build dir\>
+Then:
+
+```bash
+make -j 4
+make install
+```
+
+# 5. Redball demo
 This test executes and checks the RedBallDemo application. 
 In order to make this demo test work some prerequisited are needed.
 
@@ -56,4 +104,6 @@ As usual the test can be executed by (or by ScriptBuilder):
 ```bash
 ./blocktestrunner
 ```
+
+![Alt Text](./img/movie.gif)
 
