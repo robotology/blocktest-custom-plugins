@@ -15,7 +15,13 @@ project(blocktestcustomplugins
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
+  add_compile_options(-bigobj)
+else ()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+  set(CMAKE_EXE_LINKER_FLAGS  "-rdynamic")
+endif ()
 
 #Thrift for clock
 set(YARP_MINIMUM_REQUIRED_VERSION 3.0.102)
