@@ -5,13 +5,10 @@
 #                                                                              #
 ################################################################################
 
-# @author Luca Tricerri <luca.tricerri@iit.it>  
+# @author Luca Tricerri <luca.tricerri@iit.it>
 
 cmake_minimum_required(VERSION 3.5)
 #Module creation
-set(PROJECT_NAME blocktestcustomplugins)
-project(${PROJECT_NAME})
-
 project(blocktestcustomplugins
         LANGUAGES C CXX
         VERSION 1.0.0)
@@ -31,8 +28,15 @@ endif()
 file(GLOB allSrc "src/*.h" "src/*.cpp")
 
 add_library(${PROJECT_NAME} MODULE ${allSrc})
-target_include_directories(${PROJECT_NAME} PRIVATE ${YARP_HELPERS_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/src ${blocktestcore_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${blocktestcore_LIBRARIES} YARP::YARP_OS YARP::YARP_init YARP::YARP_dev YARP::YARP_conf YARP::YARP_sig YARP::YARP_math YARP::YARP_rosmsg)
+target_include_directories(${PROJECT_NAME} PRIVATE ${YARP_HELPERS_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(${PROJECT_NAME} PRIVATE blocktestcore::blocktestcore
+                                              YARP::YARP_OS
+                                              YARP::YARP_init
+                                              YARP::YARP_dev
+                                              YARP::YARP_conf
+                                              YARP::YARP_sig
+                                              YARP::YARP_math
+                                              YARP::YARP_rosmsg)
 
 #xml template folder
 
