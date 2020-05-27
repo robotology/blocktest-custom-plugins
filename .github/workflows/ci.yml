@@ -81,6 +81,12 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
       shell: bash
       run: |
+        # YCM
+        cd ${GITHUB_WORKSPACE}
+        git clone https://github.com/robotology/ycm.git --depth 1 --branch master
+        cd ycm && mkdir -p build && cd build
+        cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
+        cmake --build . --config ${{ matrix.build_type }} --target install
         # blocktest
         cd ${GITHUB_WORKSPACE}
         git clone https://github.com/robotology/blocktest.git --depth 1 --branch devel
@@ -93,6 +99,12 @@ jobs:
       if: matrix.os == 'windows-latest'
       shell: bash
       run: |
+        # YCM
+        cd ${GITHUB_WORKSPACE}
+        git clone https://github.com/robotology/ycm.git --depth 1 --branch master
+        cd ycm && mkdir -p build && cd build
+        cmake -A x64 -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROBOTOLOGY_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
+        cmake --build . --config ${{ matrix.build_type }} --target INSTALL 
         # blocktest
         cd ${GITHUB_WORKSPACE}
         git clone https://github.com/robotology/blocktest.git --depth 1 --branch devel
