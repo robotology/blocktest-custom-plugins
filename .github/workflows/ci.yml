@@ -87,6 +87,13 @@ jobs:
         cd ycm && mkdir -p build && cd build
         cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
         cmake --build . --config ${{ matrix.build_type }} --target install
+        # yarp
+        cd ${GITHUB_WORKSPACE}
+        git clone https://github.com/robotology/yarp.git --depth 1 --branch master
+        cd yarp && mkdir -p build && cd build
+        cmake  -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install \
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+        cmake --build . --config ${{ matrix.build_type }} --target install
         # blocktest
         cd ${GITHUB_WORKSPACE}
         git clone https://github.com/robotology/blocktest.git --depth 1 --branch devel
@@ -103,6 +110,12 @@ jobs:
         cd ${GITHUB_WORKSPACE}
         git clone https://github.com/robotology/ycm.git --depth 1 --branch master
         cd ycm && mkdir -p build && cd build
+        cmake -A x64 -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROBOTOLOGY_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
+        cmake --build . --config ${{ matrix.build_type }} --target INSTALL 
+        # yarp
+        cd ${GITHUB_WORKSPACE}
+        git clone https://github.com/robotology/yarp.git --depth 1 --branch master
+        cd yarp && mkdir -p build && cd build
         cmake -A x64 -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROBOTOLOGY_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
         cmake --build . --config ${{ matrix.build_type }} --target INSTALL 
         # blocktest
@@ -125,7 +138,10 @@ jobs:
         cd build
         cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
               -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
-
+      env:
+        # This is necessary only on macOS/homebrew, but on Linux it should be ignored
+        Qt5_DIR: /usr/local/opt/qt5/lib/cmake/Qt5
+        
     - name: Configure [Windows]
       # Use bash also on Windows (otherwise cd, mkdir, ... do not work)
       if: matrix.os == 'windows-latest'
