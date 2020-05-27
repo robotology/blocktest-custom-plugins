@@ -3,9 +3,7 @@
 
 # 1. CI Status
 
-[![Build Status (Linux) (master branch)](https://img.shields.io/travis/com/robotology/blocktest/master.svg?logo=travis&label=[master]%20build%20(Linux))](https://travis-ci.com/robotology/blocktest)
-[![Build Status (Linux) (devel branch)](https://img.shields.io/travis/com/robotology/blocktest/devel.svg?logo=travis&label=[devel]%20build%20(Linux))](https://travis-ci.com/robotology/blocktest)
-
+![Continuous Integration](https://github.com/robotology/blocktest-custom-plugins/workflows/Continuous%20Integration/badge.svg)
 # 2. TOC
 
 - [1. CI Status](#1-ci-status)
