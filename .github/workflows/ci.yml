@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build_type: [Release, Debug]
+        build_type: [Release]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
@@ -60,10 +60,8 @@ jobs:
     - name: Dependencies [macOS]
       if: matrix.os == 'macOS-latest'
       run: |
-        brew uninstall openssl@1.0.2t
-        brew uninstall python@2.7.17
-        brew untap local/openssl
-        brew untap local/python2
+        # Workaround for https://github.com/actions/virtual-environments/issues/1811#issuecomment-718475660
+        brew unlink python@3.8
         brew update
         brew upgrade
         brew install cmake boost ace eigen
